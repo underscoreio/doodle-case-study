@@ -9,15 +9,17 @@ object Ufo {
   // Open sbt console
   // val canvas = Java2DCanvas.canvas
   // Ufo.go(canvas)
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   def go(canvas: doodle.backend.Canvas): Unit = {
     canvas.setSize(600, 600)
 
-    val redraw: EventStream[Double] = Canvas.animationFrameEventStream(canvas)
-    val keys: EventStream[Key] = Canvas.keyDownEventStream(canvas)
+    val redraw: Stream[Double] = Canvas.animationFrameStream(canvas)
+    val keys: Stream[Key] = Canvas.keyDownStream(canvas)
 
     val ufo = Circle(20) fillColor (Color.red) lineColor (Color.green)
 
-    val velocity: EventStream[Vec] =
+    val velocity: Stream[Vec] =
       keys.scanLeft(Vec.zero)((prev, key) => {
           val velocity =
             key match {
@@ -31,7 +33,7 @@ object Ufo {
         }
       )
 
-    val location: EventStream[Vec] =
+    val location: Stream[Vec] =
       redraw.join(velocity).map{ case(ts, v) => v }.
         scanLeft(Vec.zero){ (velocity, prev) =>
           val location = prev + velocity
